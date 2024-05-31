@@ -1,8 +1,10 @@
 import {
   Body,
   Controller,
+  Get,
   HttpException,
   HttpStatus,
+  Param,
   Post,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
@@ -81,6 +83,22 @@ export class UsersController {
         return new HttpException('Wrong password', HttpStatus.UNAUTHORIZED);
       }
       return new HttpException('Success', HttpStatus.OK);
+    } catch (err) {
+      return new HttpException(
+        'Internal Server Error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('user/:username')
+  async getUsername(@Param('username') username: string) {
+    try {
+      const getUsername = await this.usersService.getUsername(username);
+      if (!getUsername) {
+        return new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+      return getUsername;
     } catch (err) {
       return new HttpException(
         'Internal Server Error',

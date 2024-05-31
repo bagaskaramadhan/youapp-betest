@@ -6,6 +6,7 @@ export const UsersSchema = new mongoose.Schema({
   password: { type: String, required: true },
   created_at: { type: Date, default: Date.now },
   updated_at: { type: Date, default: Date.now },
+  profile: { type: mongoose.Schema.Types.ObjectId, ref: 'cProfiles' },
 });
 
 export class Users {
@@ -14,5 +15,6 @@ export class Users {
     public username: string,
     public email: string,
     public password: string,
+    public profile: string,
   ) {}
 }
