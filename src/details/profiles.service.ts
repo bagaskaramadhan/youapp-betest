@@ -22,11 +22,11 @@ export class ProfilesService {
 
   async checkProfile(id: string) {
     const getUserId = await this.usersModel.findById(id);
-    return getUserId;
+    const getProfileId = await this.profilesModel.findById(getUserId.profile);
+    return getProfileId;
   }
 
   async updateProfile(data: any) {
-    console.log(data);
     const checkIdProfileUser = await this.usersModel.findById(data.user);
     const checkIdProfile = await this.profilesModel.findById(
       checkIdProfileUser.profile,

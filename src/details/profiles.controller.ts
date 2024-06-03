@@ -6,11 +6,28 @@ import {
   Patch,
   Post,
   Req,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { UsersService } from 'src/users/users.service';
 import * as dayjs from 'dayjs';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
 
+const imageFileFilter = (req, file, cb) => {
+  if (file.originalname.match(/\.(jpg|jpeg|png)\b/)) {
+    cb(null, true);
+  } else {
+    cb(
+      new HttpException(
+        'Only image files jpg|jpeg|png',
+        HttpStatus.BAD_REQUEST,
+      ),
+      false,
+    );
+  }
+};
 @Controller('api')
 export class ProfilesController {
   constructor(
@@ -19,7 +36,23 @@ export class ProfilesController {
   ) {}
 
   @Post('createProfile')
-  async createProfile(@Body() body: any, @Req() req: any) {
+  @UseInterceptors(
+    FileInterceptor('profile_picture', {
+      fileFilter: imageFileFilter,
+      storage: diskStorage({
+        destination: './uploads/profile_pictures',
+        filename: (req, file, cb) => {
+          const fileName = `${file.fieldname}-${Date.now()}.png`;
+          cb(null, fileName);
+        },
+      }),
+    }),
+  )
+  async createProfile(
+    @UploadedFile() profile_picture: Express.Multer.File,
+    @Body() body: any,
+    @Req() req: any,
+  ) {
     // gentoken
     const token = req.headers.authorization?.split('Bearer ')[1];
     if (!token) {
@@ -39,11 +72,20 @@ export class ProfilesController {
     const checkUserProfile = await this.profilesService.checkProfile(
       decodeToken.id,
     );
-    if (checkUserProfile.profile !== null) {
+    if (checkUserProfile !== null) {
       return new HttpException(
         'Profile cannot be created twice.',
         HttpStatus.BAD_REQUEST,
       );
+    }
+
+    if (body.interest) {
+      if (!Array.isArray(body.interest)) {
+        return new HttpException(
+          'Interest must be an array',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
     const birthdayFormat = 'YYYY-MM-DD';
     const isValidBirthday = dayjs(
@@ -63,13 +105,13 @@ export class ProfilesController {
       display_name: body.name,
       gender: body.gender,
       birthday: body.birthday,
-      profile_picture: !body.profile_picture ? '' : body.profile_picture,
+      profile_picture: profile_picture ? profile_picture.filename : '',
       horoscope: body.horoscope,
       zodiac: body.zodiac,
       height: body.height,
       weight: body.weight,
       user: decodeToken.id,
-      interest: !body.interest ? [''] : body.interest,
+      interest: body.interest || [''],
     };
     const createProfile = await this.profilesService.createProfile(
       bodyData,
@@ -81,7 +123,23 @@ export class ProfilesController {
   }
 
   @Patch('updateProfile')
-  async updateProfile(@Body() body: any, @Req() req: any) {
+  @UseInterceptors(
+    FileInterceptor('profile_picture', {
+      fileFilter: imageFileFilter,
+      storage: diskStorage({
+        destination: './uploads/profile_pictures',
+        filename: (req, file, cb) => {
+          const fileName = `${file.fieldname}-${Date.now()}.png`;
+          cb(null, fileName);
+        },
+      }),
+    }),
+  )
+  async updateProfile(
+    @UploadedFile() profile_picture: Express.Multer.File,
+    @Body() body: any,
+    @Req() req: any,
+  ) {
     // gentoken
     const token = req.headers.authorization?.split('Bearer ')[1];
     if (!token) {
@@ -96,11 +154,13 @@ export class ProfilesController {
     const decodeToken = await this.usersService.decodeToken(token);
     // gentoken
 
-    if (!Array.isArray(body.interest)) {
-      return new HttpException(
-        'Interest must be an array',
-        HttpStatus.BAD_REQUEST,
-      );
+    if (body.interest) {
+      if (!Array.isArray(body.interest)) {
+        return new HttpException(
+          'Interest must be an array',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
     }
 
     const birthdayFormat = 'YYYY-MM-DD';
@@ -121,13 +181,13 @@ export class ProfilesController {
       display_name: body.name,
       gender: body.gender,
       birthday: body.birthday,
-      profile_picture: !body.profile_picture ? '' : body.profile_picture,
+      profile_picture: profile_picture ? profile_picture.filename : '',
       horoscope: body.horoscope,
       zodiac: body.zodiac,
       height: body.height,
       weight: body.weight,
       user: decodeToken.id,
-      interest: !body.interest ? [''] : body.interest,
+      interest: body.interest || [''],
     };
     await this.profilesService.updateProfile(bodyData);
     return new HttpException('Profile has been updated', HttpStatus.CREATED);
