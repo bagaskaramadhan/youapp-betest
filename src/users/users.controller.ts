@@ -6,13 +6,14 @@ import {
   HttpStatus,
   Param,
   Post,
+  Req,
 } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { config } from 'dotenv';
 
 config();
 
-@Controller(`${process.env.PREFIX}`)
+@Controller('api')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
@@ -82,7 +83,11 @@ export class UsersController {
       if (!result) {
         return new HttpException('Wrong password', HttpStatus.UNAUTHORIZED);
       }
-      return new HttpException('Success', HttpStatus.OK);
+      const access_token = await this.usersService.generateToken(checkUser);
+      return {
+        status: HttpStatus.OK,
+        access_token,
+      };
     } catch (err) {
       return new HttpException(
         'Internal Server Error',
@@ -91,9 +96,49 @@ export class UsersController {
     }
   }
 
-  @Get('user/:username')
-  async getUsername(@Param('username') username: string) {
+  @Get('getProfile')
+  async getProfile(@Req() req: any) {
     try {
+      // gentoken
+      const token = req.headers.authorization?.split('Bearer ')[1];
+      if (!token) {
+        return new HttpException('Token not provided', HttpStatus.UNAUTHORIZED);
+      }
+      const verifyToken = await this.usersService.verifyToken(token);
+      if (verifyToken === 'invalid signature') {
+        return new HttpException('Invalid signature', HttpStatus.UNAUTHORIZED);
+      } else if (verifyToken === 'jwt expired') {
+        return new HttpException('Token expired', HttpStatus.UNAUTHORIZED);
+      }
+      // gentoken
+      // token username and compare users username
+      const decodeToken = await this.usersService.decodeToken(token);
+      const getUsername = await this.usersService.getUsername(
+        decodeToken.username,
+      );
+      if (!getUsername) {
+        return new HttpException('User not found', HttpStatus.NOT_FOUND);
+      }
+      if (getUsername.username !== decodeToken.username) {
+        return new HttpException('Invalid token', HttpStatus.UNAUTHORIZED);
+      }
+      // token username and compare users username
+      return getUsername;
+    } catch (err) {
+      return new HttpException(
+        'Internal Server Error',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  @Get('getProfile/:username')
+  async getUsername(@Param('username') username: string, @Req() req: any) {
+    try {
+      const token = req.headers.authorization?.split('Bearer ')[1];
+      if (!token) {
+        return new HttpException('Token not provided', HttpStatus.UNAUTHORIZED);
+      }
       const getUsername = await this.usersService.getUsername(username);
       if (!getUsername) {
         return new HttpException('User not found', HttpStatus.NOT_FOUND);
