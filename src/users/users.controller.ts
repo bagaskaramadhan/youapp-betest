@@ -28,6 +28,14 @@ export class UsersController {
         return new HttpException('Cannot be empty', HttpStatus.BAD_REQUEST);
       }
 
+      const usernameLength = 6;
+      if (username.length < usernameLength) {
+        return new HttpException(
+          `Username at least ${usernameLength} characters`,
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+
       const passwordLength = 6;
       if (password.length < passwordLength) {
         return new HttpException(
