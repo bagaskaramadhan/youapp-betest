@@ -14,10 +14,10 @@ export class MessagesService {
 
   async sendMessage(data: any, decodeId: string) {
     const checkSender = await this.usersModel.findOne({
-      username: data.sender,
+      username: data.sender.toLowerCase(),
     });
     const checkReceiver = await this.usersModel.findOne({
-      username: data.received,
+      username: data.received.toLowerCase(),
     });
     if (!checkReceiver || !checkSender) {
       return new Error('User not found');

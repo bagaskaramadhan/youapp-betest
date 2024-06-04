@@ -17,7 +17,7 @@ export class UsersService {
     try {
       const dataPayload = { username: payload.username, id: payload.id };
       const token = await jwt.sign(dataPayload, process.env.TOKEN_KEY, {
-        expiresIn: '2h',
+        expiresIn: '3m',
       });
       return token;
     } catch (err) {

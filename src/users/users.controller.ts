@@ -147,7 +147,9 @@ export class UsersController {
       if (!token) {
         return new HttpException('Token not provided', HttpStatus.UNAUTHORIZED);
       }
-      const getUsername = await this.usersService.getUsername(username);
+      const getUsername = await this.usersService.getUsername(
+        username.toLowerCase(),
+      );
       if (!getUsername) {
         return new HttpException('User not found', HttpStatus.NOT_FOUND);
       }

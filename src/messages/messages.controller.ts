@@ -94,7 +94,7 @@ export class MessagesController {
     const getMessageByUsername =
       await this.messagesService.viewMessageByUsername(
         decodeToken.id,
-        username,
+        username.toLowerCase(),
       );
 
     return getMessageByUsername;
