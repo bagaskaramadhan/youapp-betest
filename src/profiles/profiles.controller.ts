@@ -100,14 +100,17 @@ export class ProfilesController {
         HttpStatus.BAD_REQUEST,
       );
     }
-    body.birthday = dayjs(body.birthday).format('YYYY-MM-DD 00:00:00');
+    body.birthday = dayjs(body.birthday).format('YYYY-MM-DD');
+    const zodiacAndHoroscope = await this.profilesService.zodiacAndHoroscope(
+      body,
+    );
     const bodyData = {
       display_name: body.name,
       gender: body.gender,
       birthday: body.birthday,
       profile_picture: profile_picture ? profile_picture.filename : '',
-      horoscope: body.horoscope,
-      zodiac: body.zodiac,
+      horoscope: zodiacAndHoroscope.horoscope,
+      zodiac: zodiacAndHoroscope.zodiac,
       height: body.height,
       weight: body.weight,
       user: decodeToken.id,
@@ -180,10 +183,7 @@ export class ProfilesController {
     const bodyData = {
       display_name: body.name,
       gender: body.gender,
-      birthday: body.birthday,
       profile_picture: profile_picture ? profile_picture.filename : '',
-      horoscope: body.horoscope,
-      zodiac: body.zodiac,
       height: body.height,
       weight: body.weight,
       user: decodeToken.id,
